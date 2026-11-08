@@ -74,10 +74,13 @@ function where(tenantId: string, f: LeadFilter) {
   return { sql: clauses.join(" AND "), args };
 }
 
+/** Neueste Suche zuerst, innerhalb einer Suche in der Reihenfolge der Quelle (bei Google: Relevanz). */
+const ORDER_NEWEST = "COALESCE(search_id, 0) DESC, id ASC";
+
 export function listLeads(tenantId: string, f: LeadFilter = {}, limit = 500): Lead[] {
   const w = where(tenantId, f);
   return getDb()
-    .prepare(`SELECT * FROM leads WHERE ${w.sql} ORDER BY ${f.sort === "bewertung" ? "score IS NULL, score DESC, " : ""}created_at DESC, id DESC LIMIT ?`)
+    .prepare(`SELECT * FROM leads WHERE ${w.sql} ORDER BY ${f.sort === "bewertung" ? "score IS NULL, score DESC, " : "COALESCE(hiring, 0) DESC, "}${ORDER_NEWEST} LIMIT ?`)
     .all(...w.args, limit) as unknown as Lead[];
 }
 
@@ -238,7 +241,7 @@ export function listLeadsByIds(tenantId: string, ids: number[]): Lead[] {
   const clean = ids.filter((n) => Number.isInteger(n) && n > 0);
   if (!clean.length) return [];
   return getDb()
-    .prepare(`SELECT * FROM leads WHERE tenant_id = ? AND id IN (${clean.map(() => "?").join(",")}) ORDER BY created_at DESC, id DESC`)
+    .prepare(`SELECT * FROM leads WHERE tenant_id = ? AND id IN (${clean.map(() => "?").join(",")}) ORDER BY ${ORDER_NEWEST}`)
     .all(tenantId, ...clean) as unknown as Lead[];
 }
 

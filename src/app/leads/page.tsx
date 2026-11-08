@@ -113,7 +113,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
           <option value="4">ab 4 Punkten</option>
         </select>
         <select name="sortierung" defaultValue={f.sort ?? ""} aria-label="Sortierung">
-          <option value="">Neueste zuerst</option>
+          <option value="">„Stellt ein“ zuerst, dann neueste</option>
           <option value="bewertung">Beste Bewertung zuerst</option>
         </select>
         <label className="check"><input type="checkbox" name="email" value="1" defaultChecked={f.hasEmail} /> mit E-Mail</label>
