@@ -150,6 +150,7 @@ export function saveSearchResults(
   const insert = db.prepare(`INSERT OR IGNORE INTO leads
     (tenant_id, search_id, source, source_ref, name, industry, street, zip, city, country, phone, email, website, contact_name, contact_role)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const moveToSearch = db.prepare("UPDATE leads SET search_id = ? WHERE tenant_id = ? AND source = ? AND source_ref = ?");
   let added = 0;
   db.exec("BEGIN");
   try {
@@ -159,7 +160,9 @@ export function saveSearchResults(
         c.industry ?? null, c.street ?? null, c.zip ?? null, c.city ?? null, c.country ?? null,
         c.phone ?? null, c.email ?? null, c.website ?? null, c.contactName ?? null, c.contactRole ?? null
       );
-      added += Number(r.changes);
+      if (Number(r.changes)) added++;
+      // Schon vorhandene Firma: der neuesten Suche zuordnen, damit sie in deren Trefferliste auftaucht
+      else if (c.sourceRef) moveToSearch.run(searchId, tenantId, search.source, c.sourceRef);
     }
     db.prepare("UPDATE searches SET added = ? WHERE id = ?").run(added, searchId);
     db.exec("COMMIT");

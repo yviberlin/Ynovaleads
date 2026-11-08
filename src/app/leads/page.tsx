@@ -53,7 +53,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
         <div className="notice" role="status">
           {found === 0
             ? "Für diese Suche wurden keine Firmen gefunden. Versuch es mit einem anderen Stichwort oder einem größeren Ort."
-            : `${found} Firmen gefunden, davon ${fresh} neu in deiner Liste.${fresh < (found ?? 0) ? " Der Rest war schon vorhanden." : ""}`}
+            : `${found} Firmen gefunden, davon ${fresh} neu in deiner Liste.${fresh < (found ?? 0) ? ` Die anderen ${(found ?? 0) - fresh} hattest du schon, sie werden hier mit angezeigt.` : ""}`}
         </div>
       )}
 
