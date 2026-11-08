@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/suche", label: "Neue Suche" },
   { href: "/leads", label: "Leads" },
+  { href: "/roi", label: "ROI-Rechner" },
   { href: "/einstellungen", label: "Wunschkunden-Profil" },
 ];
 
@@ -22,7 +23,6 @@ export function Nav() {
           </Link>
         );
       })}
-      <span title="Kommt in Schritt 4">ROI-Rechner <small>bald</small></span>
     </nav>
   );
 }
