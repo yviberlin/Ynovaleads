@@ -106,6 +106,14 @@ td .sub { display: block; font-size: 13px; color: var(--muted); }
 td a.name { font-weight: 600; text-decoration: none; }
 td a.name:hover { color: var(--hibiskus-strong); text-decoration: underline; }
 .missing { color: var(--line); }
+.check-col { width: 44px; padding-right: 0; }
+.row-check { width: 18px; height: 18px; accent-color: var(--hibiskus); cursor: pointer; margin: 2px 0 0; }
+tbody tr:has(.row-check:checked) { background: var(--hibiskus-soft); }
+.selection-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; border: 1px dashed var(--line); color: var(--muted); }
+.selection-bar.active { border: 1px solid var(--hibiskus); background: var(--hibiskus-soft); color: var(--hibiskus-ink); }
+.selection-bar select { width: auto; padding: 6px 10px; font-size: 14px; }
+.selection-count { flex: 1 1 220px; font-weight: 600; font-size: 14px; }
+.btn:disabled, .selection-bar select:disabled { opacity: .45; cursor: not-allowed; }
 
 .status-select { font-weight: 600; font-size: 13px; padding: 5px 8px; border-radius: 99px; border: none; width: auto; cursor: pointer; }
 .st-neu { background: var(--info-soft); color: var(--info); }
@@ -115,6 +123,7 @@ td a.name:hover { color: var(--hibiskus-strong); text-decoration: underline; }
 .st-kein_interesse { background: var(--grey-soft); color: var(--muted); }
 
 .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--grey-soft); color: var(--muted); }
+.pill-obsidian { background: var(--hibiskus-soft); color: var(--hibiskus-ink); }
 .notice { border-radius: 12px; padding: 12px 16px; background: var(--hibiskus-soft); color: var(--hibiskus-ink); font-weight: 500; }
 .notice.error { background: var(--hibiskus); color: #fff; }
 .empty { text-align: center; padding: 48px 16px; color: var(--muted); display: flex; flex-direction: column; gap: 12px; align-items: center; }

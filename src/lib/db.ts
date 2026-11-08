@@ -63,6 +63,7 @@ function open(): DatabaseSync {
   // Spalten, die nach der ersten Version dazugekommen sind
   const cols = (db.prepare("PRAGMA table_info(leads)").all() as { name: string }[]).map((c) => c.name);
   if (!cols.includes("impressum_url")) db.exec("ALTER TABLE leads ADD COLUMN impressum_url TEXT");
+  if (!cols.includes("obsidian_at")) db.exec("ALTER TABLE leads ADD COLUMN obsidian_at TEXT");
   if (!cols.includes("enriched_at")) db.exec("ALTER TABLE leads ADD COLUMN enriched_at TEXT");
 
   db.prepare("INSERT OR IGNORE INTO tenants (id, name) VALUES (?, ?)").run(

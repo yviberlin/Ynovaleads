@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentTenantId } from "./tenant";
 import { getSource } from "./sources";
-import { saveSearchResults, updateLead, deleteLead, getLead, applyEnrichment, leadsNeedingEnrichment, parseFilter } from "./leads";
+import { saveSearchResults, updateLead, deleteLead, getLead, applyEnrichment, leadsNeedingEnrichment, parseFilter, setStatusForIds, listLeadsByIds, markInObsidian } from "./leads";
 import { enrichWebsite, mapLimit } from "./enrich";
+import { writeLeadsToObsidian } from "./obsidian";
 import { isLeadStatus } from "./status";
 
 export type SearchState = { error?: string };
@@ -104,4 +105,32 @@ export async function enrichFiltered(form: FormData) {
   p.set("ergaenzt", String(improved));
   p.set("geprueft", String(todo.length));
   redirect(`/leads?${p.toString()}`);
+}
+
+/** Setzt den Status für alle ausgewählten Leads. */
+export async function setStatusForSelected(form: FormData) {
+  const tenantId = await getCurrentTenantId();
+  const status = String(form.get("bulkStatus") ?? "");
+  const ids = form.getAll("id").map(Number);
+  if (isLeadStatus(status)) setStatusForIds(tenantId, ids, status);
+  revalidatePath("/");
+  revalidatePath("/leads");
+}
+
+/** Schreibt die ausgewählten Leads als Notizen in die Obsidian-Kommandozentrale. */
+export async function sendSelectedToObsidian(form: FormData) {
+  const tenantId = await getCurrentTenantId();
+  const ids = form.getAll("id").map(Number);
+  const back = new URLSearchParams(String(form.get("qs") ?? ""));
+  try {
+    const leads = listLeadsByIds(tenantId, ids);
+    const r = writeLeadsToObsidian(leads);
+    markInObsidian(tenantId, leads.map((l) => l.id));
+    back.set("obsidian", String(r.written));
+    if (r.skipped) back.set("obsidianDa", String(r.skipped));
+  } catch (e) {
+    back.set("obsidianFehler", e instanceof Error ? e.message : "Übertragung fehlgeschlagen.");
+  }
+  revalidatePath("/leads");
+  redirect(`/leads?${back.toString()}`);
 }

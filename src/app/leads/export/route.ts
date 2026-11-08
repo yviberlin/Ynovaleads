@@ -1,13 +1,17 @@
 import { getCurrentTenantId } from "@/lib/tenant";
-import { listLeads, parseFilter } from "@/lib/leads";
+import { listLeads, listLeadsByIds, parseFilter } from "@/lib/leads";
 import { leadsToCsv } from "@/lib/csv";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const t = await getCurrentTenantId();
-  const sp = Object.fromEntries(new URL(req.url).searchParams.entries());
-  const leads = listLeads(t, parseFilter(sp), 100000);
+  const params = new URL(req.url).searchParams;
+  const ids = params.getAll("id").map(Number);
+  // Mit Häkchen ausgewählte Leads, sonst alle, die zum Filter passen
+  const leads = ids.length
+    ? listLeadsByIds(t, ids)
+    : listLeads(t, parseFilter(Object.fromEntries(params.entries())), 100000);
   const date = new Date().toISOString().slice(0, 10);
   return new Response(leadsToCsv(leads), {
     headers: {
