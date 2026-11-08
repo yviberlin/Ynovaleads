@@ -17,15 +17,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap"
         />
       </head>
       <body suppressHydrationWarning>
         <div className="shell">
           <aside className="side">
-            <a href="/" className="logo">
-              <span className="logo-mark" aria-hidden="true">Y</span>
-              Ynovaleads
+            <a href="/" className="logo" aria-label="Ynovaleads, zum Dashboard">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.svg" alt="" className="logo-mark" width={888} height={706} />
+              <span className="logo-word">YNOVALEADS</span>
             </a>
             <Nav />
             <div className="side-foot">Master-Version</div>
