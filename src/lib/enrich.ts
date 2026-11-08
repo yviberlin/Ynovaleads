@@ -52,9 +52,16 @@ export function htmlToText(html: string): string {
 
 const BAD_EMAIL = /\.(png|jpe?g|gif|svg|webp|css|js)$|@(example\.|sentry|wixpress|domain\.|email\.|ihre-?domain|beispiel)|^(name|max\.mustermann|vorname)@/i;
 
+const VALID_EMAIL = /^[^@\s]+@[^@\s]+\.[a-z]{2,24}$/i;
+
 export function extractEmails(html: string, text: string): string[] {
   const found = new Set<string>();
-  for (const m of html.matchAll(/mailto:([^"'?>\s]+)/gi)) found.add(decodeURIComponent(m[1]));
+  // mailto-Links: oft mit HTML-Entities oder %-Kodierung verschleiert
+  for (const m of html.matchAll(/mailto:([^"'?>\s]+)/gi)) {
+    let v = decodeEntities(decodeEntities(m[1]));
+    try { v = decodeURIComponent(v); } catch {}
+    found.add(v);
+  }
   const deobf = text
     .replace(/\s*[\[(]\s*(at|ät)\s*[\])]\s*/gi, "@")
     .replace(/\s+(at)\s+(?=[a-z0-9-]+\s*(\.|[\[(]\s*(dot|punkt)))/gi, "@")
@@ -62,7 +69,7 @@ export function extractEmails(html: string, text: string): string[] {
   for (const m of deobf.matchAll(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,24}/gi)) found.add(m[0]);
   return [...found]
     .map((e) => e.trim().replace(/[.,;:]+$/, "").toLowerCase())
-    .filter((e) => !BAD_EMAIL.test(e));
+    .filter((e) => VALID_EMAIL.test(e) && !BAD_EMAIL.test(e));
 }
 
 /** Bevorzugt Adressen der eigenen Domain und allgemeine Postfächer wie info@ oder kontakt@. */
@@ -72,7 +79,7 @@ export function pickEmail(emails: string[], website?: string | null): string | u
   try { host = website ? new URL(website).hostname.replace(/^www\./, "") : ""; } catch {}
   const score = (e: string) => {
     let s = 0;
-    const [local, domain] = e.split("@");
+    const [local = "", domain = ""] = e.split("@");
     if (host && (domain === host || domain.endsWith("." + host) || host.endsWith("." + domain))) s += 10;
     if (/^(info|kontakt|contact|office|mail|hallo|hello|praxis|kanzlei|service|post)$/.test(local)) s += 5;
     if (/^(datenschutz|privacy|dsb|noreply|no-reply|webmaster|abuse)/.test(local)) s -= 8;
