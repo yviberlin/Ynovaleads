@@ -15,7 +15,7 @@ function Submit() {
   );
 }
 
-export function SearchForm({ sources, defaultSource }: { sources: SourceInfo[]; defaultSource: string }) {
+export function SearchForm({ sources, defaultSource, industries }: { sources: SourceInfo[]; defaultSource: string; industries: string[] }) {
   const [state, action] = useActionState<SearchState, FormData>(runSearch, {});
   return (
     <form action={action} className="card" style={{ gap: 20 }}>
@@ -23,7 +23,8 @@ export function SearchForm({ sources, defaultSource }: { sources: SourceInfo[]; 
       <div className="search-form">
         <label className="field" htmlFor="query">
           Branche oder Stichwort
-          <input id="query" name="query" type="text" placeholder="z. B. Zahnarzt, Steuerberater, Friseur" required />
+          <input id="query" name="query" type="text" list="industries" autoComplete="off" placeholder="z. B. Zahnarzt, Steuerberater, Friseur" required />
+          <datalist id="industries">{industries.map((i) => <option key={i} value={i} />)}</datalist>
         </label>
         <label className="field" htmlFor="location">
           Ort oder PLZ
