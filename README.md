@@ -11,6 +11,21 @@ Eigener B2B-Leadscraper: Firmen finden, Kontaktdaten sammeln, Leads verwalten.
 - **Export** als CSV, öffnet sich direkt in Excel
 - **Impressum auslesen:** E-Mail, Telefon und Geschäftsführer bzw. Inhaber werden automatisch von der Website geholt (bei der Suche oder per Button). Vorhandene Daten werden nie überschrieben.
 
+## Leads auswählen und in die Kommandozentrale übertragen
+
+In der Lead-Liste hakst du einzelne Leads an. Dann kannst du:
+
+- **In Obsidian übertragen:** Jeder Lead wird eine Notiz im Obsidian-Tresor, im gleichen Aufbau wie die Lead-Vorlage der Kommandozentrale (`typ: lead`, `firma`, `kontakt`, `status` …). Gibt es die Notiz schon, bleibt sie unverändert, damit deine Änderungen in Obsidian erhalten bleiben.
+- **Ausgewählte herunterladen** als CSV
+- **Status setzen** für alle ausgewählten auf einmal
+
+Dafür in `.env.local` eintragen:
+
+```
+OBSIDIAN_VAULT_PATH=/Pfad/zu/deinem/Tresor
+OBSIDIAN_LEADS_FOLDER=Leads/01 Aktuell
+```
+
 ## Datenquellen
 
 | Quelle | Kosten | Hinweis |

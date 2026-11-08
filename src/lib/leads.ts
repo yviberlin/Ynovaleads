@@ -25,6 +25,7 @@ export type Lead = {
   notes: string | null;
   impressum_url: string | null;
   enriched_at: string | null;
+  obsidian_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -207,4 +208,28 @@ export function leadsNeedingEnrichment(tenantId: string, f: LeadFilter, limit: n
       AND (email IS NULL OR email = '' OR contact_name IS NULL OR contact_name = '' OR phone IS NULL OR phone = '')
       ORDER BY id DESC LIMIT ?`)
     .all(...w.args, limit) as unknown as Lead[];
+}
+
+export function listLeadsByIds(tenantId: string, ids: number[]): Lead[] {
+  const clean = ids.filter((n) => Number.isInteger(n) && n > 0);
+  if (!clean.length) return [];
+  return getDb()
+    .prepare(`SELECT * FROM leads WHERE tenant_id = ? AND id IN (${clean.map(() => "?").join(",")}) ORDER BY created_at DESC, id DESC`)
+    .all(tenantId, ...clean) as unknown as Lead[];
+}
+
+export function setStatusForIds(tenantId: string, ids: number[], status: LeadStatus) {
+  const clean = ids.filter((n) => Number.isInteger(n) && n > 0);
+  if (!clean.length) return;
+  getDb()
+    .prepare(`UPDATE leads SET status = ?, updated_at = datetime('now') WHERE tenant_id = ? AND id IN (${clean.map(() => "?").join(",")})`)
+    .run(status, tenantId, ...clean);
+}
+
+export function markInObsidian(tenantId: string, ids: number[]) {
+  const clean = ids.filter((n) => Number.isInteger(n) && n > 0);
+  if (!clean.length) return;
+  getDb()
+    .prepare(`UPDATE leads SET obsidian_at = datetime('now') WHERE tenant_id = ? AND id IN (${clean.map(() => "?").join(",")})`)
+    .run(tenantId, ...clean);
 }
