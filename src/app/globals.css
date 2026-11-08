@@ -6,7 +6,8 @@
   --hibiskus-ink: #7A0A33;
   --bg: #FAF6F8;
   --surface: #FFFFFF;
-  --fg: #2A141E;
+  --fg: #33373B; /* Anthrazit */
+  --brand-grey: #A3A6AA; /* Hellgrau für den Schriftzug */
   --muted: #7A5C68;
   --line: #EFDAE2;
   --ok: #1F8A5B;
@@ -24,7 +25,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --hibiskus: #F0367A; --hibiskus-strong: #FF6496; --hibiskus-soft: #3A1627; --hibiskus-ink: #FFC0D6;
-    --bg: #160C11; --surface: #21131A; --fg: #F7EAF0; --muted: #C2A3B1; --line: #3B2430;
+    --bg: #160C11; --surface: #21131A; --fg: #F7EAF0; --brand-grey: #9EA2A7; --muted: #C2A3B1; --line: #3B2430;
     --ok: #4CC08A; --ok-soft: #12301F; --warn: #E5B256; --warn-soft: #33270F;
     --info: #74A9E6; --info-soft: #122438; --grey-soft: #2E2027;
     color-scheme: dark;
@@ -42,7 +43,7 @@ h2 { font-size: 18px; font-weight: 700; }
 .side { background: var(--surface); border-right: 1px solid var(--line); padding: 24px 16px; display: flex; flex-direction: column; gap: 28px; position: sticky; top: 0; height: 100vh; }
 .logo { display: flex; flex-direction: column; align-items: center; gap: 12px; text-decoration: none; padding: 8px 8px 4px; }
 .logo-mark { width: 128px; height: auto; display: block; }
-.logo-word { font-family: var(--font-brand); font-weight: 700; font-size: 26px; letter-spacing: .14em; line-height: 1; padding-left: .14em; color: var(--fg); }
+.logo-word { font-family: var(--font-brand); font-weight: 700; font-size: 26px; letter-spacing: .14em; line-height: 1; padding-left: .14em; color: var(--brand-grey); }
 .nav { display: flex; flex-direction: column; gap: 2px; }
 .nav a, .nav span { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; text-decoration: none; color: var(--muted); font-weight: 500; }
 .nav a:hover { background: var(--hibiskus-soft); color: var(--hibiskus-ink); }
