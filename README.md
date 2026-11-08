@@ -67,6 +67,9 @@ Dann http://localhost:3000 öffnen. Braucht Node.js 22.13 oder neuer (die Datenb
 Alle Daten hängen schon heute an einem Mandanten (`tenant_id`). In der Master-Version ist das immer `master` (siehe `src/lib/tenant.ts`).
 Für Kunden kommen später ein Login und ein eigener Mandant pro Kunde dazu, ohne dass die übrige App umgebaut werden muss.
 
-## Nächste Schritte
+## ROI-Rechner
 
-- ROI-Rechner
+Rechnet aus, was deine Leads bringen: Anzahl Leads, wie viele du erreichst, wie viele einen Termin wollen und wie viele Kunde werden,
+dazu Auftragswert, Datenkosten und deine Zeit. Ergebnis: Neukunden, Umsatz, Gewinn und ROI.
+Sobald du mindestens 10 Leads kontaktiert hast, kann er deine echten Quoten aus der Lead-Liste übernehmen.
+Deine Eingaben merkt sich der Browser.
