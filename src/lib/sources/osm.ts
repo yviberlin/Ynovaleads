@@ -1,4 +1,5 @@
 import type { LeadSource, FoundCompany } from "./types";
+import { geocode, MAX_RADIUS_KM } from "./geo";
 
 const UA = "Leadscraper/0.1 (self-hosted lead research tool)";
 
@@ -75,27 +76,21 @@ function tagsFor(query: string): string[] {
   return [`"name"~"${safe}",i`];
 }
 
-async function geocode(location: string): Promise<[number, number, number, number]> {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de,at,ch&q=${encodeURIComponent(location)}`;
-  const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "de" } });
-  if (!res.ok) throw new Error(`Ort konnte nicht gefunden werden (${res.status}).`);
-  const data = (await res.json()) as { boundingbox: string[] }[];
-  if (!data.length) throw new Error(`Den Ort „${location}“ gibt es auf der Karte nicht.`);
-  const [south, north, west, east] = data[0].boundingbox.map(Number);
-  return [south, west, north, east];
-}
-
 export const osmSource: LeadSource = {
   id: "osm",
   label: "OpenStreetMap",
   description: "Freie Weltkarte. Kostenlos, aber nicht jede Firma ist eingetragen.",
   costs: "kostenlos",
   availability: () => ({ ok: true }),
-  async search({ query, location, limit }) {
-    const [s, w, n, e] = await geocode(location);
-    const bbox = `${s},${w},${n},${e}`;
+  async search({ query, location, limit, radiusKm }) {
+    const place = await geocode(location);
+    const radius = Math.min(radiusKm ?? 0, MAX_RADIUS_KM);
+    // Ohne Umkreis: Rechteck um den Ort. Mit Umkreis: Kreis um die Ortsmitte.
+    const area = radius > 0
+      ? `around:${Math.round(radius * 1000)},${place.lat},${place.lon}`
+      : place.bbox.join(",");
     const parts = tagsFor(query)
-      .map((t) => `nwr[${t}](${bbox});`)
+      .map((t) => `nwr[${t}](${area});`)
       .join("\n");
     const ql = `[out:json][timeout:25];(${parts});out center tags ${Math.max(limit * 2, 20)};`;
     const res = await fetch("https://overpass-api.de/api/interpreter", {
@@ -117,7 +112,7 @@ export const osmSource: LeadSource = {
         industry: query.trim(),
         street: [t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(" ") || undefined,
         zip: t["addr:postcode"],
-        city: t["addr:city"] || location,
+        city: t["addr:city"] || (radius > 0 ? undefined : location),
         country: t["addr:country"],
         phone: t.phone || t["contact:phone"],
         email: t.email || t["contact:email"],

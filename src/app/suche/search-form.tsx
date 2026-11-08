@@ -30,6 +30,15 @@ export function SearchForm({ sources, defaultSource, industries }: { sources: So
           Ort oder PLZ
           <input id="location" name="location" type="text" placeholder="z. B. Berlin oder 80331" required />
         </label>
+        <label className="field" htmlFor="radius">
+          Umkreis
+          <select id="radius" name="radius" defaultValue="0">
+            <option value="0">nur im Ort</option>
+            <option value="10">+ 10 km</option>
+            <option value="25">+ 25 km</option>
+            <option value="50">+ 50 km</option>
+          </select>
+        </label>
         <label className="field" htmlFor="limit">
           Wie viele?
           <input id="limit" name="limit" type="number" min={1} max={100} defaultValue={25} />

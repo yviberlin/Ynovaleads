@@ -7,6 +7,7 @@ export type SearchParams = {
   query: string; // Branche oder Stichwort, z. B. "Zahnarzt"
   location: string; // Ort oder PLZ, z. B. "Berlin" oder "10115"
   limit: number;
+  radiusKm?: number; // Umkreis um den Ort in km, 0 oder leer = nur im Ort selbst
 };
 
 export type FoundCompany = {

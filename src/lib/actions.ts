@@ -17,6 +17,7 @@ export async function runSearch(_prev: SearchState, form: FormData): Promise<Sea
   const location = String(form.get("location") ?? "").trim();
   const sourceId = String(form.get("source") ?? "demo");
   const limit = Math.min(Math.max(Number(form.get("limit") ?? 25) || 25, 1), 100);
+  const radiusKm = Math.min(Math.max(Number(form.get("radius") ?? 0) || 0, 0), 50);
 
   if (!query) return { error: "Bitte gib eine Branche oder ein Stichwort ein." };
   if (!location) return { error: "Bitte gib einen Ort oder eine Postleitzahl ein." };
@@ -28,8 +29,9 @@ export async function runSearch(_prev: SearchState, form: FormData): Promise<Sea
 
   let result;
   try {
-    const companies = await source.search({ query, location, limit });
-    result = saveSearchResults(tenantId, { query, location, source: source.id }, companies);
+    const companies = await source.search({ query, location, limit, radiusKm });
+    const where = radiusKm > 0 ? `${location} + ${radiusKm} km` : location;
+    result = saveSearchResults(tenantId, { query, location: where, source: source.id }, companies);
     if (form.get("enrich") === "1" && source.id !== "demo") {
       await enrichLeads(tenantId, leadsNeedingEnrichment(tenantId, { searchId: result.searchId }, limit));
     }
