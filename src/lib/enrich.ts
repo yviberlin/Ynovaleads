@@ -13,6 +13,13 @@ export type Enrichment = {
   contactName?: string;
   contactRole?: string;
   impressumUrl?: string;
+  /** Offene Stellen von der Website (nur gesetzt, wenn danach gesucht wurde) */
+  jobs?: JobInfo;
+};
+
+export type JobInfo = {
+  titles: string[]; // erkannte Stellentitel, z. B. "Steuerfachangestellte (m/w/d)"
+  careersUrl?: string; // Karriereseite, falls gefunden
 };
 
 // ---------- Hilfsfunktionen (rein, ohne Netzwerk, daher gut testbar) ----------
@@ -117,6 +124,51 @@ export function findImpressumLinks(html: string, base: string): string[] {
   return [...new Set(out)];
 }
 
+// ---------- Offene Stellen ----------
+
+const CAREER_LINK = /karriere|career|\bjobs?\b|stellen(angebote?|anzeigen|markt|börse)?\b|offene[- ]stellen|wir[- ]suchen|mitarbeiter(in)?[- ]gesucht|join[- ]us|arbeiten[- ]bei|team[- ]verstärkung/i;
+const ATS_HOST = /personio\.(de|com)|softgarden\.io|join\.com|recruitee\.com|onlyfy\.jobs|prescreen\.io|smartrecruiters\.com|greenhouse\.io|workable\.com|d\.vinci|dvinci-hr|rexx-systems|concludis|jobs\.ashbyhq/i;
+// "(m/w/d)", "(w/m/d)", "(m|w|d)", "(d/m/w)", "(all genders)", "(gn)", "(m/f/d)" …
+const GENDER_MARK = /\((?:[mwdfxi]|div)\s*[\/|,]\s*(?:[mwdfxi]|div)(?:\s*[\/|,]\s*(?:[mwdfxi]|div))?\)|\(all genders?\)|\(gn\)/i;
+const NO_JOBS = /(derzeit|aktuell|momentan|zurzeit)\s+(\S+\s+){0,3}?(keine|kein)\s+(offenen?\s+)?(stellen|jobs|stellenangebote|vakanzen)/i;
+
+/** Links zur Karriereseite oder zu einem Bewerbungsportal. */
+export function findCareerLinks(html: string, base: string): string[] {
+  const own: string[] = [];
+  const ats: string[] = [];
+  for (const m of html.matchAll(/<a\b[^>]*href\s*=\s*["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const href = m[1];
+    if (/^(mailto|tel|javascript):/i.test(href)) continue;
+    const label = htmlToText(m[2]);
+    let url: URL;
+    try { url = new URL(href, base); } catch { continue; }
+    if (ATS_HOST.test(url.hostname)) ats.push(url.toString());
+    else if (CAREER_LINK.test(url.pathname + " " + label) && !/datenschutz|privacy|impressum/i.test(url.pathname)) own.push(url.toString());
+  }
+  return [...new Set([...ats, ...own])];
+}
+
+/** Erkennt Stellentitel an der Geschlechterangabe wie "(m/w/d)". */
+export function extractJobTitles(html: string): string[] {
+  const titles: string[] = [];
+  for (const raw of htmlToText(html).split("\n")) {
+    const m = raw.match(GENDER_MARK);
+    if (!m || m.index === undefined) continue;
+    let t = raw.slice(0, m.index + m[0].length).trim();
+    // Vorspann wie "Wir suchen eine/n" oder "Stellenangebot:" entfernen
+    t = t.replace(/^.*?(wir suchen|suchen wir|zur verstärkung[^:]*?)\s+(ab sofort\s+)?(eine?n?|eine\/n|einen\/eine|eine\/einen)?\s*/i, "");
+    t = t.replace(/^(stellenangebot|stellenanzeige|job|neu)\s*[:\-–]\s*/i, "").replace(/\s+/g, " ").trim();
+    if (t.length < 5 || t.length > 90 || /datenschutz|cookie|newsletter/i.test(t)) continue;
+    titles.push(t);
+  }
+  const seen = new Set<string>();
+  return titles.filter((t) => { const k = t.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 15);
+}
+
+export function pageSaysNoJobs(html: string): boolean {
+  return NO_JOBS.test(htmlToText(html));
+}
+
 /** Wertet eine oder mehrere Seiten aus. Spätere Seiten (Impressum) haben Vorrang. */
 export function extractFromPages(pages: { url: string; html: string }[], website?: string | null): Enrichment {
   const result: Enrichment = {};
@@ -170,6 +222,28 @@ function normalizeWebsite(w: string): string {
   return /^https?:\/\//i.test(w) ? w : `https://${w}`;
 }
 
+/** Sucht die Karriereseite und liest offene Stellen aus. */
+async function findJobs(home: { url: string; html: string }): Promise<JobInfo> {
+  const titles = extractJobTitles(home.html);
+  let careersUrl: string | undefined;
+  const candidates = findCareerLinks(home.html, home.url).slice(0, 3);
+  for (const c of candidates) {
+    const page = await fetchHtml(c);
+    if (!page) continue;
+    careersUrl ??= page.url;
+    const found = extractJobTitles(page.html);
+    titles.push(...found);
+    // Eigene Karriereseite verweist oft auf ein Bewerbungsportal
+    if (!found.length && !pageSaysNoJobs(page.html)) {
+      const portal = findCareerLinks(page.html, page.url).find((u) => ATS_HOST.test(new URL(u).hostname));
+      const p2 = portal ? await fetchHtml(portal) : undefined;
+      if (p2) titles.push(...extractJobTitles(p2.html));
+    }
+    if (titles.length) break;
+  }
+  return { titles: [...new Set(titles)].slice(0, 15), careersUrl };
+}
+
 export async function enrichWebsite(website: string): Promise<Enrichment | undefined> {
   const start = normalizeWebsite(website.trim());
   const home = await fetchHtml(start);
@@ -187,7 +261,9 @@ export async function enrichWebsite(website: string): Promise<Enrichment | undef
       break;
     }
   }
-  return extractFromPages(pages, home.url);
+  const result = extractFromPages(pages, home.url);
+  result.jobs = await findJobs(home);
+  return result;
 }
 
 /** Führt Aufgaben mit begrenzter Parallelität aus, damit Websites nicht überlastet werden. */

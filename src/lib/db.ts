@@ -65,6 +65,8 @@ function open(): DatabaseSync {
   if (!cols.includes("impressum_url")) db.exec("ALTER TABLE leads ADD COLUMN impressum_url TEXT");
   if (!cols.includes("obsidian_at")) db.exec("ALTER TABLE leads ADD COLUMN obsidian_at TEXT");
   if (!cols.includes("enriched_at")) db.exec("ALTER TABLE leads ADD COLUMN enriched_at TEXT");
+  if (!cols.includes("hiring")) db.exec("ALTER TABLE leads ADD COLUMN hiring INTEGER");
+  if (!cols.includes("careers_url")) db.exec("ALTER TABLE leads ADD COLUMN careers_url TEXT");
   if (!cols.includes("score_reason")) db.exec("ALTER TABLE leads ADD COLUMN score_reason TEXT");
   if (!cols.includes("scored_at")) db.exec("ALTER TABLE leads ADD COLUMN scored_at TEXT");
 

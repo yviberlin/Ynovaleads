@@ -24,6 +24,7 @@ export default async function LeadDetail({ params, searchParams }: { params: Pro
     ["Telefon", l.phone],
     ["Website", l.website ? <a href={l.website} target="_blank" rel="noopener noreferrer">{l.website}</a> : null],
     ["Adresse", [l.street, [l.zip, l.city].filter(Boolean).join(" ")].filter(Boolean).join(", ") || null],
+    ["Stellt ein", l.hiring === 1 ? (l.careers_url ? <>Ja · <a href={l.careers_url} target="_blank" rel="noopener noreferrer">Karriereseite öffnen</a></> : "Ja") : l.hiring === 0 ? "Keine offenen Stellen gefunden" : null],
     ["Impressum", l.impressum_url ? <a href={l.impressum_url} target="_blank" rel="noopener noreferrer">Impressum öffnen</a> : null],
     ["Quelle", getSource(l.source)?.label ?? l.source],
     ["Gefunden am", new Date(l.created_at + "Z").toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" })],

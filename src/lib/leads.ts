@@ -27,6 +27,8 @@ export type Lead = {
   enriched_at: string | null;
   obsidian_at: string | null;
   score_reason: string | null;
+  hiring: number | null; // 1 = Stellen auf der Website gefunden
+  careers_url: string | null;
   scored_at: string | null;
   created_at: string;
   updated_at: string;
@@ -195,6 +197,11 @@ export function parseFilter(sp: Record<string, string | string[] | undefined>): 
   };
 }
 
+function hiringFlag(e: Enrichment | undefined): number | null {
+  if (!e?.jobs) return null;
+  return e.jobs.titles.length ? 1 : 0;
+}
+
 /** Trägt gefundene Daten ein, überschreibt aber nichts, was schon da ist. */
 export function applyEnrichment(tenantId: string, id: number, e: Enrichment | undefined) {
   getDb()
@@ -204,10 +211,16 @@ export function applyEnrichment(tenantId: string, id: number, e: Enrichment | un
       contact_name = COALESCE(NULLIF(contact_name, ''), ?),
       contact_role = CASE WHEN contact_name IS NULL OR contact_name = '' THEN ? ELSE contact_role END,
       impressum_url = COALESCE(?, impressum_url),
+      hiring = CASE WHEN ? IS NULL THEN hiring ELSE ? END,
+      careers_url = COALESCE(?, careers_url),
       enriched_at = datetime('now'),
       updated_at = datetime('now')
     WHERE tenant_id = ? AND id = ?`)
-    .run(e?.email ?? null, e?.phone ?? null, e?.contactName ?? null, e?.contactRole ?? null, e?.impressumUrl ?? null, tenantId, id);
+    .run(
+      e?.email ?? null, e?.phone ?? null, e?.contactName ?? null, e?.contactRole ?? null, e?.impressumUrl ?? null,
+      hiringFlag(e), hiringFlag(e), e?.jobs?.careersUrl ?? null,
+      tenantId, id
+    );
 }
 
 /** Leads mit Website, bei denen noch Daten fehlen und die noch nicht ausgelesen wurden. */
