@@ -9,7 +9,7 @@ Eigener B2B-Leadscraper: Firmen finden, Kontaktdaten sammeln, Leads verwalten.
 - **Lead-Liste** mit Filtern (Status, Ort, Branche, mit E-Mail, mit Ansprechpartner)
 - **Lead-Status** (Neu, Kontaktiert, Termin, Kunde, Kein Interesse) und Notizen
 - **Export** als CSV, öffnet sich direkt in Excel
-- **Impressum auslesen:** E-Mail, Telefon und Geschäftsführer bzw. Inhaber werden automatisch von der Website geholt (bei der Suche oder per Button). Vorhandene Daten werden nie überschrieben.
+- **Impressum auslesen:** E-Mail, Telefon und Geschäftsführer bzw. Inhaber werden automatisch von der Website geholt, dazu „stellt ein“, wenn die Firma auf ihrer Website Stellen ausschreibt (bei der Suche oder per Button). Vorhandene Daten werden nie überschrieben.
 
 ## Leads auswählen und in die Kommandozentrale übertragen
 

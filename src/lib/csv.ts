@@ -13,6 +13,7 @@ const COLUMNS: [keyof Lead, string][] = [
   ["zip", "PLZ"],
   ["city", "Ort"],
   ["status", "Status"],
+  ["hiring", "Stellt ein"],
   ["score", "Bewertung"],
   ["score_reason", "Begründung"],
   ["notes", "Notizen"],
@@ -28,7 +29,7 @@ function cell(v: unknown): string {
 export function leadsToCsv(leads: Lead[]): string {
   const head = COLUMNS.map(([, label]) => label).join(";");
   const rows = leads.map((l) =>
-    COLUMNS.map(([key]) => cell(key === "status" ? statusLabel(l.status) : l[key])).join(";")
+    COLUMNS.map(([key]) => cell(key === "status" ? statusLabel(l.status) : key === "hiring" ? (l.hiring === 1 ? "ja" : "") : l[key])).join(";")
   );
   return "﻿" + [head, ...rows].join("\r\n");
 }

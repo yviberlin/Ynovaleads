@@ -151,7 +151,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
                   <td><ScoreBadge score={l.score} reason={l.score_reason} /></td>
                   <td>
                     <Link className="name" href={`/leads/${l.id}`}>{l.name}</Link>
-                    <span className="sub">{l.industry}{l.source === "demo" && <> · <span className="pill">Beispiel</span></>}{l.obsidian_at && <> · <span className="pill pill-obsidian">in Obsidian</span></>}</span>
+                    <span className="sub">{l.industry}{l.source === "demo" && <> · <span className="pill">Beispiel</span></>}{l.hiring === 1 && <> · <span className="pill pill-hiring">stellt ein</span></>}{l.obsidian_at && <> · <span className="pill pill-obsidian">in Obsidian</span></>}</span>
                   </td>
                   <td>
                     {l.contact_name ? <>{l.contact_name}<span className="sub">{l.contact_role}</span></> : <span className="missing">—</span>}
