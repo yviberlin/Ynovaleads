@@ -26,6 +26,8 @@ export type Lead = {
   impressum_url: string | null;
   enriched_at: string | null;
   obsidian_at: string | null;
+  score_reason: string | null;
+  scored_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -48,6 +50,8 @@ export type LeadFilter = {
   hasEmail?: boolean;
   hasContact?: boolean;
   searchId?: number;
+  minScore?: number;
+  sort?: "neu" | "bewertung";
 };
 
 function where(tenantId: string, f: LeadFilter) {
@@ -62,6 +66,7 @@ function where(tenantId: string, f: LeadFilter) {
   if (f.city) { clauses.push("city = ?"); args.push(f.city); }
   if (f.industry) { clauses.push("industry = ?"); args.push(f.industry); }
   if (f.searchId) { clauses.push("search_id = ?"); args.push(f.searchId); }
+  if (f.minScore) { clauses.push("score >= ?"); args.push(f.minScore); }
   if (f.hasEmail) clauses.push("email IS NOT NULL AND email <> ''");
   if (f.hasContact) clauses.push("contact_name IS NOT NULL AND contact_name <> ''");
   return { sql: clauses.join(" AND "), args };
@@ -70,7 +75,7 @@ function where(tenantId: string, f: LeadFilter) {
 export function listLeads(tenantId: string, f: LeadFilter = {}, limit = 500): Lead[] {
   const w = where(tenantId, f);
   return getDb()
-    .prepare(`SELECT * FROM leads WHERE ${w.sql} ORDER BY created_at DESC, id DESC LIMIT ?`)
+    .prepare(`SELECT * FROM leads WHERE ${w.sql} ORDER BY ${f.sort === "bewertung" ? "score IS NULL, score DESC, " : ""}created_at DESC, id DESC LIMIT ?`)
     .all(...w.args, limit) as unknown as Lead[];
 }
 
@@ -176,6 +181,7 @@ export function saveSearchResults(
 export function parseFilter(sp: Record<string, string | string[] | undefined>): LeadFilter {
   const one = (k: string) => { const v = sp[k]; return (Array.isArray(v) ? v[0] : v)?.trim() || undefined; };
   const sid = Number(one("suche"));
+  const min = Number(one("punkte"));
   return {
     q: one("q"),
     status: one("status"),
@@ -184,6 +190,8 @@ export function parseFilter(sp: Record<string, string | string[] | undefined>): 
     hasEmail: one("email") === "1",
     hasContact: one("kontakt") === "1",
     searchId: Number.isFinite(sid) && sid > 0 ? sid : undefined,
+    minScore: Number.isInteger(min) && min >= 1 && min <= 10 ? min : undefined,
+    sort: one("sortierung") === "bewertung" ? "bewertung" : undefined,
   };
 }
 
@@ -235,4 +243,27 @@ export function markInObsidian(tenantId: string, ids: number[]) {
   getDb()
     .prepare(`UPDATE leads SET obsidian_at = datetime('now') WHERE tenant_id = ? AND id IN (${clean.map(() => "?").join(",")})`)
     .run(tenantId, ...clean);
+}
+
+export function saveScore(tenantId: string, id: number, score: number, reason: string) {
+  getDb()
+    .prepare("UPDATE leads SET score = ?, score_reason = ?, scored_at = datetime('now'), updated_at = datetime('now') WHERE tenant_id = ? AND id = ?")
+    .run(score, reason, tenantId, id);
+}
+
+/** Leads, die noch keine KI-Bewertung haben. */
+export function leadsWithoutScore(tenantId: string, f: LeadFilter, limit: number): Lead[] {
+  const w = where(tenantId, f);
+  return getDb()
+    .prepare(`SELECT * FROM leads WHERE ${w.sql} AND scored_at IS NULL ORDER BY id DESC LIMIT ?`)
+    .all(...w.args, limit) as unknown as Lead[];
+}
+
+export function scoreStats(tenantId: string) {
+  return getDb()
+    .prepare(`SELECT
+      SUM(CASE WHEN scored_at IS NOT NULL THEN 1 ELSE 0 END) AS scored,
+      SUM(CASE WHEN score >= 8 THEN 1 ELSE 0 END) AS top
+    FROM leads WHERE tenant_id = ?`)
+    .get(tenantId) as { scored: number | null; top: number | null };
 }

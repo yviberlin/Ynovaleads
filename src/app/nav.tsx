@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/suche", label: "Neue Suche" },
   { href: "/leads", label: "Leads" },
+  { href: "/einstellungen", label: "Wunschkunden-Profil" },
 ];
 
 export function Nav() {

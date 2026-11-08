@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentTenantId } from "./tenant";
 import { getSource } from "./sources";
-import { saveSearchResults, updateLead, deleteLead, getLead, applyEnrichment, leadsNeedingEnrichment, parseFilter, setStatusForIds, listLeadsByIds, markInObsidian } from "./leads";
-import { enrichWebsite, mapLimit } from "./enrich";
+import { saveSearchResults, updateLead, deleteLead, getLead, applyEnrichment, leadsNeedingEnrichment, parseFilter, setStatusForIds, listLeadsByIds, markInObsidian, saveScore, leadsWithoutScore, type Lead } from "./leads";
+import { enrichWebsite, fetchWebsiteText, mapLimit } from "./enrich";
+import { aiAvailable, friendlyAiError, scoreLead } from "./score";
+import { getProfile, saveProfile } from "./settings";
 import { writeLeadsToObsidian } from "./obsidian";
 import { isLeadStatus } from "./status";
 
@@ -133,4 +135,80 @@ export async function sendSelectedToObsidian(form: FormData) {
   }
   revalidatePath("/leads");
   redirect(`/leads?${back.toString()}`);
+}
+
+// ---------- KI-Bewertung ----------
+
+const SCORE_BATCH = 25;
+
+async function scoreLeads(tenantId: string, leads: Lead[]): Promise<{ done: number; error?: string }> {
+  const avail = aiAvailable();
+  if (!avail.ok) return { done: 0, error: avail.reason };
+  const profile = getProfile(tenantId);
+  let done = 0;
+  let error: string | undefined;
+  await mapLimit(leads, 4, async (l) => {
+    if (error) return;
+    try {
+      const text = l.website ? await fetchWebsiteText(l.website) : undefined;
+      const r = await scoreLead(l, profile, text);
+      saveScore(tenantId, l.id, r.score, r.reason);
+      done++;
+    } catch (e) {
+      error = friendlyAiError(e);
+    }
+  });
+  return { done, error };
+}
+
+function backToList(qs: string, r: { done: number; error?: string }, extra: Record<string, string> = {}) {
+  const p = new URLSearchParams(qs);
+  p.set("bewertet", String(r.done));
+  if (r.error) p.set("bewertungFehler", r.error);
+  for (const [k, v] of Object.entries(extra)) p.set(k, v);
+  revalidatePath("/");
+  revalidatePath("/leads");
+  redirect(`/leads?${p.toString()}`);
+}
+
+/** Bewertet einen einzelnen Lead (auch neu, wenn er schon bewertet war). */
+export async function scoreOne(form: FormData) {
+  const tenantId = await getCurrentTenantId();
+  const id = Number(form.get("id"));
+  const lead = getLead(tenantId, id);
+  const r = lead ? await scoreLeads(tenantId, [lead]) : { done: 0 };
+  revalidatePath("/");
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${id}`);
+  if (r.error) redirect(`/leads/${id}?bewertungFehler=${encodeURIComponent(r.error)}`);
+}
+
+/** Bewertet die angehakten Leads. */
+export async function scoreSelected(form: FormData) {
+  const tenantId = await getCurrentTenantId();
+  const ids = form.getAll("id").map(Number).slice(0, 100);
+  const r = await scoreLeads(tenantId, listLeadsByIds(tenantId, ids));
+  backToList(String(form.get("qs") ?? ""), r);
+}
+
+/** Bewertet die gefilterten Leads, die noch keine Bewertung haben (höchstens 25 auf einmal). */
+export async function scoreFiltered(form: FormData) {
+  const tenantId = await getCurrentTenantId();
+  const qs = String(form.get("qs") ?? "");
+  const f = parseFilter(Object.fromEntries(new URLSearchParams(qs).entries()));
+  const todo = leadsWithoutScore(tenantId, f, SCORE_BATCH);
+  const r = await scoreLeads(tenantId, todo);
+  backToList(qs, r, { offen: String(todo.length === SCORE_BATCH ? 1 : 0) });
+}
+
+export type ProfileState = { saved?: boolean; error?: string };
+
+export async function saveCustomerProfile(_prev: ProfileState, form: FormData): Promise<ProfileState> {
+  const tenantId = await getCurrentTenantId();
+  const get = (k: string) => String(form.get(k) ?? "").trim().slice(0, 2000);
+  const p = { angebot: get("angebot"), zielkunden: get("zielkunden"), region: get("region"), gutesZeichen: get("gutesZeichen"), ausschluss: get("ausschluss") };
+  if (!p.angebot) return { error: "Bitte beschreib kurz, was du anbietest." };
+  saveProfile(tenantId, p);
+  revalidatePath("/einstellungen");
+  return { saved: true };
 }

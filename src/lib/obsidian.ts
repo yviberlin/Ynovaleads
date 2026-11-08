@@ -42,7 +42,7 @@ export function leadToMarkdown(l: Lead, today = new Date().toISOString().slice(0
     ["kontakt", kontakt],
     ["quelle", `Ynovaleads (${SOURCE_NAMES[l.source] ?? l.source})`],
     ["status", STATUS_MAP[l.status] ?? "neu"],
-    ["prio", "mittel"],
+    ["prio", l.score == null ? "mittel" : l.score >= 8 ? "hoch" : l.score >= 5 ? "mittel" : "niedrig"],
     ["wert", 0],
     ["naechster_kontakt", ""],
     ["naechster_schritt", l.status === "neu" ? "Erstkontakt aufnehmen" : ""],
@@ -51,6 +51,7 @@ export function leadToMarkdown(l: Lead, today = new Date().toISOString().slice(0
     ["email", l.email],
     ["telefon", l.phone],
     ["ort", l.city],
+    ["bewertung", l.score],
     ["ynovaleads_id", l.id],
   ];
   const front = props.map(([k, v]) => `${k}: ${yaml(v)}`.trimEnd()).join("\n");
@@ -68,6 +69,7 @@ export function leadToMarkdown(l: Lead, today = new Date().toISOString().slice(0
     "## Bedarf",
     l.industry ? `${l.industry}${l.city ? ` in ${l.city}` : ""}. Bedarf noch klären.` : "Bedarf noch klären.",
     "",
+    ...(l.score_reason ? [`KI-Bewertung: ${l.score}/10. ${l.score_reason}`, ""] : []),
     "## Kontaktdaten",
     ...kontaktdaten,
     "",

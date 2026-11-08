@@ -14,6 +14,7 @@ const COLUMNS: [keyof Lead, string][] = [
   ["city", "Ort"],
   ["status", "Status"],
   ["score", "Bewertung"],
+  ["score_reason", "Begründung"],
   ["notes", "Notizen"],
   ["created_at", "Gefunden am"],
 ];

@@ -5,7 +5,8 @@ import { LEAD_STATUSES } from "@/lib/status";
 import { StatusSelect } from "../components/status-select";
 import { SubmitButton } from "../components/submit-button";
 import { RowCheck, SelectAll, SelectionBar } from "../components/selection";
-import { enrichFiltered } from "@/lib/actions";
+import { enrichFiltered, scoreFiltered } from "@/lib/actions";
+import { ScoreBadge } from "../components/score-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
   const cities = distinctValues(t, "city");
   const industries = distinctValues(t, "industry");
   const qs = new URLSearchParams(
-    Object.entries(sp).flatMap(([k, v]) => (typeof v === "string" && v && !["neu", "gefunden", "ergaenzt", "geprueft", "obsidian", "obsidianDa", "obsidianFehler"].includes(k) ? [[k, v]] : []))
+    Object.entries(sp).flatMap(([k, v]) => (typeof v === "string" && v && !["neu", "gefunden", "ergaenzt", "geprueft", "obsidian", "obsidianDa", "obsidianFehler", "bewertet", "bewertungFehler", "offen"].includes(k) ? [[k, v]] : []))
   ).toString();
   const fresh = typeof sp.neu === "string" ? Number(sp.neu) : null;
   const found = typeof sp.gefunden === "string" ? Number(sp.gefunden) : null;
@@ -43,6 +44,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
           <form action={enrichFiltered}>
             <input type="hidden" name="qs" value={qs} />
             <SubmitButton className="btn ghost" pendingText="Websites werden gelesen …">Fehlende Daten ergänzen</SubmitButton>
+          </form>
+          <form action={scoreFiltered}>
+            <input type="hidden" name="qs" value={qs} />
+            <SubmitButton className="btn ghost" pendingText="KI bewertet, bitte warten …">Mit KI bewerten</SubmitButton>
           </form>
           <a href={`/leads/export${qs ? "?" + qs : ""}`} className="btn ghost">Als Excel/CSV herunterladen</a>
           <Link href="/suche" className="btn">Neue Suche</Link>
@@ -72,6 +77,20 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
         </div>
       )}
 
+      {typeof sp.bewertet === "string" && !sp.bewertungFehler && (
+        <div className="notice" role="status">
+          {sp.bewertet === "0"
+            ? "Alle Leads in dieser Ansicht sind schon bewertet. Einzelne Leads kannst du auf ihrer Seite neu bewerten lassen."
+            : `${sp.bewertet === "1" ? "1 Lead" : `${sp.bewertet} Leads`} bewertet.${sp.offen === "1" ? " Klick nochmal auf „Mit KI bewerten“ für die nächsten." : ""}`}
+          {" "}<Link href={`/leads?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(qs)), sortierung: "bewertung" })}`}>Beste zuerst anzeigen</Link>
+        </div>
+      )}
+      {typeof sp.bewertungFehler === "string" && (
+        <div className="notice error" role="alert">
+          {sp.bewertet && sp.bewertet !== "0" ? `${sp.bewertet} Leads bewertet, dann gab es ein Problem: ` : ""}{sp.bewertungFehler}
+        </div>
+      )}
+
       <form className="filters" method="get">
         {f.searchId && <input type="hidden" name="suche" value={f.searchId} />}
         <input type="search" name="q" placeholder="Firma, E-Mail oder Name suchen" defaultValue={f.q ?? ""} aria-label="Suchen" />
@@ -86,6 +105,16 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
         <select name="branche" defaultValue={f.industry ?? ""} aria-label="Branche">
           <option value="">Alle Branchen</option>
           {industries.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select name="punkte" defaultValue={f.minScore ? String(f.minScore) : ""} aria-label="Bewertung">
+          <option value="">Jede Bewertung</option>
+          <option value="8">ab 8 Punkten</option>
+          <option value="6">ab 6 Punkten</option>
+          <option value="4">ab 4 Punkten</option>
+        </select>
+        <select name="sortierung" defaultValue={f.sort ?? ""} aria-label="Sortierung">
+          <option value="">Neueste zuerst</option>
+          <option value="bewertung">Beste Bewertung zuerst</option>
         </select>
         <label className="check"><input type="checkbox" name="email" value="1" defaultChecked={f.hasEmail} /> mit E-Mail</label>
         <label className="check"><input type="checkbox" name="kontakt" value="1" defaultChecked={f.hasContact} /> mit Ansprechpartner</label>
@@ -107,6 +136,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
             <thead>
               <tr>
                 <th className="check-col"><SelectAll /></th>
+                <th>Punkte</th>
                 <th>Firma</th>
                 <th>Ansprechpartner</th>
                 <th>Kontakt</th>
@@ -118,6 +148,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
               {leads.map((l) => (
                 <tr key={l.id}>
                   <td className="check-col"><RowCheck id={l.id} name={l.name} /></td>
+                  <td><ScoreBadge score={l.score} reason={l.score_reason} /></td>
                   <td>
                     <Link className="name" href={`/leads/${l.id}`}>{l.name}</Link>
                     <span className="sub">{l.industry}{l.source === "demo" && <> · <span className="pill">Beispiel</span></>}{l.obsidian_at && <> · <span className="pill pill-obsidian">in Obsidian</span></>}</span>

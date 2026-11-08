@@ -3,14 +3,16 @@ import { notFound } from "next/navigation";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { getLead } from "@/lib/leads";
 import { getSource } from "@/lib/sources";
-import { saveNotes, removeLead, enrichOne } from "@/lib/actions";
+import { saveNotes, removeLead, enrichOne, scoreOne } from "@/lib/actions";
+import { ScoreBadge } from "../../components/score-badge";
 import { SubmitButton } from "../../components/submit-button";
 import { StatusSelect } from "../../components/status-select";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeadDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function LeadDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
+  const sp = await searchParams;
   const t = await getCurrentTenantId();
   const l = getLead(t, Number(id));
   if (!l) notFound();
@@ -37,6 +39,24 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
         </div>
         <StatusSelect id={l.id} status={l.status} />
       </div>
+      <section className="card">
+        <h2>KI-Bewertung</h2>
+        {typeof sp.bewertungFehler === "string" && <div className="notice error" role="alert">{sp.bewertungFehler}</div>}
+        {l.scored_at ? (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <ScoreBadge score={l.score} /> <strong>von 10 Punkten</strong>
+            </div>
+            <p className="score-reason">{l.score_reason}</p>
+          </>
+        ) : (
+          <p className="score-reason" style={{ color: "var(--muted)" }}>Noch nicht bewertet. Die KI schaut sich die Daten und die Website an und vergleicht sie mit deinem <Link href="/einstellungen">Wunschkunden-Profil</Link>.</p>
+        )}
+        <form action={scoreOne}>
+          <input type="hidden" name="id" value={l.id} />
+          <SubmitButton className="btn small ghost" pendingText="KI bewertet …">{l.scored_at ? "Neu bewerten" : "Mit KI bewerten"}</SubmitButton>
+        </form>
+      </section>
       <div className="grid two">
         <section className="card">
           <h2>Kontaktdaten</h2>
