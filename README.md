@@ -9,6 +9,7 @@ Eigener B2B-Leadscraper: Firmen finden, Kontaktdaten sammeln, Leads verwalten.
 - **Lead-Liste** mit Filtern (Status, Ort, Branche, mit E-Mail, mit Ansprechpartner)
 - **Lead-Status** (Neu, Kontaktiert, Termin, Kunde, Kein Interesse) und Notizen
 - **Export** als CSV, öffnet sich direkt in Excel
+- **Impressum auslesen:** E-Mail, Telefon und Geschäftsführer bzw. Inhaber werden automatisch von der Website geholt (bei der Suche oder per Button). Vorhandene Daten werden nie überschrieben.
 
 ## Datenquellen
 
@@ -36,6 +37,5 @@ Für Kunden kommen später ein Login und ein eigener Mandant pro Kunde dazu, ohn
 
 ## Nächste Schritte
 
-2. Websites und Impressum automatisch auslesen (E-Mail, Geschäftsführer)
 3. ROI-Rechner
 4. KI-Bewertung der Leads

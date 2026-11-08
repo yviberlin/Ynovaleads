@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { getLead } from "@/lib/leads";
 import { getSource } from "@/lib/sources";
-import { saveNotes, removeLead } from "@/lib/actions";
+import { saveNotes, removeLead, enrichOne } from "@/lib/actions";
+import { SubmitButton } from "../../components/submit-button";
 import { StatusSelect } from "../../components/status-select";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
     ["Telefon", l.phone],
     ["Website", l.website ? <a href={l.website} target="_blank" rel="noopener noreferrer">{l.website}</a> : null],
     ["Adresse", [l.street, [l.zip, l.city].filter(Boolean).join(" ")].filter(Boolean).join(", ") || null],
+    ["Impressum", l.impressum_url ? <a href={l.impressum_url} target="_blank" rel="noopener noreferrer">Impressum öffnen</a> : null],
     ["Quelle", getSource(l.source)?.label ?? l.source],
     ["Gefunden am", new Date(l.created_at + "Z").toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" })],
   ];
@@ -46,6 +48,14 @@ export default async function LeadDetail({ params }: { params: Promise<{ id: str
               </div>
             ))}
           </dl>
+          {l.website && (
+            <form action={enrichOne}>
+              <input type="hidden" name="id" value={l.id} />
+              <SubmitButton className="btn small ghost" pendingText="Website wird gelesen …">
+                {l.enriched_at ? "Website nochmal auslesen" : "Daten von der Website holen"}
+              </SubmitButton>
+            </form>
+          )}
         </section>
         <section className="card">
           <h2>Notizen</h2>

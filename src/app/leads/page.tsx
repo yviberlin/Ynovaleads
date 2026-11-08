@@ -3,6 +3,8 @@ import { getCurrentTenantId } from "@/lib/tenant";
 import { countLeads, distinctValues, listLeads, parseFilter } from "@/lib/leads";
 import { LEAD_STATUSES } from "@/lib/status";
 import { StatusSelect } from "../components/status-select";
+import { SubmitButton } from "../components/submit-button";
+import { enrichFiltered } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +24,12 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
   const cities = distinctValues(t, "city");
   const industries = distinctValues(t, "industry");
   const qs = new URLSearchParams(
-    Object.entries(sp).flatMap(([k, v]) => (typeof v === "string" && v && !["neu", "gefunden"].includes(k) ? [[k, v]] : []))
+    Object.entries(sp).flatMap(([k, v]) => (typeof v === "string" && v && !["neu", "gefunden", "ergaenzt", "geprueft"].includes(k) ? [[k, v]] : []))
   ).toString();
   const fresh = typeof sp.neu === "string" ? Number(sp.neu) : null;
   const found = typeof sp.gefunden === "string" ? Number(sp.gefunden) : null;
+  const improved = typeof sp.ergaenzt === "string" ? Number(sp.ergaenzt) : null;
+  const checked = typeof sp.geprueft === "string" ? Number(sp.geprueft) : null;
 
   return (
     <>
@@ -35,6 +39,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
           <p>{total === all ? `${all} Leads` : `${total} von ${all} Leads`}</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <form action={enrichFiltered}>
+            <input type="hidden" name="qs" value={qs} />
+            <SubmitButton className="btn ghost" pendingText="Websites werden gelesen …">Fehlende Daten ergänzen</SubmitButton>
+          </form>
           <a href={`/leads/export${qs ? "?" + qs : ""}`} className="btn ghost">Als Excel/CSV herunterladen</a>
           <Link href="/suche" className="btn">Neue Suche</Link>
         </div>
@@ -45,6 +53,14 @@ export default async function LeadsPage({ searchParams }: { searchParams: SP }) 
           {found === 0
             ? "Für diese Suche wurden keine Firmen gefunden. Versuch es mit einem anderen Stichwort oder einem größeren Ort."
             : `${found} Firmen gefunden, davon ${fresh} neu in deiner Liste.${fresh < (found ?? 0) ? " Der Rest war schon vorhanden." : ""}`}
+        </div>
+      )}
+
+      {improved !== null && (
+        <div className="notice" role="status">
+          {checked === 0
+            ? "Alle Leads mit Website sind schon ausgelesen."
+            : `${checked} Websites gelesen, bei ${improved} Leads neue Daten gefunden.${checked === 40 ? " Klick nochmal, um die nächsten zu ergänzen." : ""}`}
         </div>
       )}
 
