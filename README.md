@@ -5,7 +5,7 @@ Eigener B2B-Leadscraper: Firmen finden, Kontaktdaten sammeln, Leads verwalten.
 ## Was er schon kann (Schritt 1)
 
 - **Dashboard** mit Zahlen zu deinen Leads, Status und letzten Suchen
-- **Neue Suche** nach Branche und Ort, mit wählbarer Datenquelle
+- **Neue Suche** nach Branche und Ort, mit Umkreis (nur im Ort, +10, +25 oder +50 km) und wählbarer Datenquelle
 - **Lead-Liste** mit Filtern (Status, Ort, Branche, mit E-Mail, mit Ansprechpartner)
 - **Lead-Status** (Neu, Kontaktiert, Termin, Kunde, Kein Interesse) und Notizen
 - **Export** als CSV, öffnet sich direkt in Excel

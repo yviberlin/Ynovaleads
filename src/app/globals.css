@@ -81,7 +81,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--hibiskus); 
 .check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
 .check input { accent-color: var(--hibiskus); width: 16px; height: 16px; }
 
-.search-form { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 14px; }
+.search-form { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 14px; }
 .sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
 .source { position: relative; border: 2px solid var(--line); border-radius: 12px; padding: 14px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; background: var(--surface); }
 .source input { position: absolute; opacity: 0; }
