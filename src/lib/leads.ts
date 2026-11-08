@@ -1,6 +1,7 @@
 import { getDb } from "./db";
 import type { FoundCompany } from "./sources";
 import type { LeadStatus } from "./status";
+import type { Enrichment } from "./enrich";
 
 export type Lead = {
   id: number;
@@ -22,6 +23,8 @@ export type Lead = {
   status: string;
   score: number | null;
   notes: string | null;
+  impressum_url: string | null;
+  enriched_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -178,4 +181,30 @@ export function parseFilter(sp: Record<string, string | string[] | undefined>): 
     hasContact: one("kontakt") === "1",
     searchId: Number.isFinite(sid) && sid > 0 ? sid : undefined,
   };
+}
+
+/** Trägt gefundene Daten ein, überschreibt aber nichts, was schon da ist. */
+export function applyEnrichment(tenantId: string, id: number, e: Enrichment | undefined) {
+  getDb()
+    .prepare(`UPDATE leads SET
+      email = COALESCE(NULLIF(email, ''), ?),
+      phone = COALESCE(NULLIF(phone, ''), ?),
+      contact_name = COALESCE(NULLIF(contact_name, ''), ?),
+      contact_role = CASE WHEN contact_name IS NULL OR contact_name = '' THEN ? ELSE contact_role END,
+      impressum_url = COALESCE(?, impressum_url),
+      enriched_at = datetime('now'),
+      updated_at = datetime('now')
+    WHERE tenant_id = ? AND id = ?`)
+    .run(e?.email ?? null, e?.phone ?? null, e?.contactName ?? null, e?.contactRole ?? null, e?.impressumUrl ?? null, tenantId, id);
+}
+
+/** Leads mit Website, bei denen noch Daten fehlen und die noch nicht ausgelesen wurden. */
+export function leadsNeedingEnrichment(tenantId: string, f: LeadFilter, limit: number): Lead[] {
+  const w = where(tenantId, f);
+  return getDb()
+    .prepare(`SELECT * FROM leads WHERE ${w.sql}
+      AND website IS NOT NULL AND website <> '' AND enriched_at IS NULL
+      AND (email IS NULL OR email = '' OR contact_name IS NULL OR contact_name = '' OR phone IS NULL OR phone = '')
+      ORDER BY id DESC LIMIT ?`)
+    .all(...w.args, limit) as unknown as Lead[];
 }

@@ -10,7 +10,7 @@ function Submit() {
   const { pending } = useFormStatus();
   return (
     <button className="btn" type="submit" disabled={pending}>
-      {pending ? "Suche läuft …" : "Leads suchen"}
+      {pending ? "Suche läuft, bitte kurz warten …" : "Leads suchen"}
     </button>
   );
 }
@@ -47,6 +47,10 @@ export function SearchForm({ sources, defaultSource }: { sources: SourceInfo[]; 
           ))}
         </div>
       </fieldset>
+      <label className="check" htmlFor="enrich">
+        <input id="enrich" type="checkbox" name="enrich" value="1" defaultChecked />
+        Websites und Impressum gleich auslesen (E-Mail, Geschäftsführer). Dauert etwas länger.
+      </label>
       <div><Submit /></div>
     </form>
   );
