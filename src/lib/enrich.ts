@@ -203,3 +203,16 @@ export async function mapLimit<T, R>(items: T[], limit: number, fn: (t: T) => Pr
   await Promise.all(workers);
   return out;
 }
+
+/** Holt den sichtbaren Text der Startseite (gekürzt), z. B. als Grundlage für die KI-Bewertung. */
+export async function fetchWebsiteText(website: string, maxChars = 4000): Promise<string | undefined> {
+  const home = await fetchHtml(normalizeWebsite(website.trim()));
+  if (!home) return undefined;
+  const title = home.html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim();
+  const desc = home.html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i)?.[1]?.trim();
+  const text = htmlToText(home.html).replace(/\s+/g, " ").trim();
+  return [title && `Titel: ${decodeEntities(title)}`, desc && `Beschreibung: ${decodeEntities(desc)}`, text]
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, maxChars);
+}

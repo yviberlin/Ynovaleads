@@ -26,6 +26,23 @@ OBSIDIAN_VAULT_PATH=/Pfad/zu/deinem/Tresor
 OBSIDIAN_LEADS_FOLDER=Leads/01 Aktuell
 ```
 
+## KI-Bewertung
+
+Unter **Wunschkunden-Profil** beschreibst du, was du anbietest und welche Firmen gut passen.
+Danach bewertet Claude (Anthropic) jeden Lead mit **1 bis 10 Punkten** und einer kurzen Begründung.
+Dafür liest die App auch die Startseite der Firma.
+
+- In der Lead-Liste: „Mit KI bewerten“ (bis zu 25 noch nicht bewertete Leads auf einmal) oder angehakte Leads bewerten
+- Filter „ab 8 Punkten“ und Sortierung „Beste Bewertung zuerst“
+- Auf der Lead-Seite: Begründung lesen und neu bewerten lassen
+- In Obsidian wird aus der Bewertung die `prio` (8–10 hoch, 5–7 mittel, 1–4 niedrig), dazu `bewertung`
+
+Kosten: ungefähr 1 Cent pro Lead. Dafür in `.env.local` eintragen:
+
+```
+ANTHROPIC_API_KEY=dein-schluessel
+```
+
 ## Datenquellen
 
 | Quelle | Kosten | Hinweis |
@@ -52,5 +69,4 @@ Für Kunden kommen später ein Login und ein eigener Mandant pro Kunde dazu, ohn
 
 ## Nächste Schritte
 
-3. ROI-Rechner
-4. KI-Bewertung der Leads
+- ROI-Rechner

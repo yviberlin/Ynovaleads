@@ -152,3 +152,9 @@ tbody tr:has(.row-check:checked) { background: var(--hibiskus-soft); }
   .dl { grid-template-columns: 1fr; gap: 2px; }
   .dl dd { margin-bottom: 10px; }
 }
+
+/* KI-Bewertung */
+.score { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 26px; padding: 0 8px; border-radius: 99px; font-weight: 700; font-size: 13px; background: var(--grey-soft); color: var(--muted); }
+.score.mid { background: var(--hibiskus-soft); color: var(--hibiskus-ink); }
+.score.high { background: var(--hibiskus); color: #fff; }
+.score-reason { margin: 8px 0 14px; line-height: 1.5; }

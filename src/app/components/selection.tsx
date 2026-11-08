@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LEAD_STATUSES } from "@/lib/status";
-import { setStatusForSelected, sendSelectedToObsidian } from "@/lib/actions";
+import { setStatusForSelected, sendSelectedToObsidian, scoreSelected } from "@/lib/actions";
 
 export const SELECTION_FORM = "auswahl";
 
@@ -62,6 +62,9 @@ export function SelectionBar({ qs }: { qs: string }) {
       </span>
       <button className="btn small ghost" type="submit" formAction="/leads/export" formMethod="get" disabled={!count}>
         Ausgewählte herunterladen
+      </button>
+      <button className="btn small ghost" type="submit" formAction={scoreSelected} disabled={!count}>
+        Mit KI bewerten
       </button>
       <button className="btn small" type="submit" formAction={sendSelectedToObsidian} disabled={!count}>
         In Obsidian übertragen

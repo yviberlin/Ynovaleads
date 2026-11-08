@@ -65,6 +65,17 @@ function open(): DatabaseSync {
   if (!cols.includes("impressum_url")) db.exec("ALTER TABLE leads ADD COLUMN impressum_url TEXT");
   if (!cols.includes("obsidian_at")) db.exec("ALTER TABLE leads ADD COLUMN obsidian_at TEXT");
   if (!cols.includes("enriched_at")) db.exec("ALTER TABLE leads ADD COLUMN enriched_at TEXT");
+  if (!cols.includes("score_reason")) db.exec("ALTER TABLE leads ADD COLUMN score_reason TEXT");
+  if (!cols.includes("scored_at")) db.exec("ALTER TABLE leads ADD COLUMN scored_at TEXT");
+
+  // Einstellungen pro Kunde (z. B. das Wunschkunden-Profil für die KI-Bewertung)
+  db.exec(`CREATE TABLE IF NOT EXISTS settings (
+    tenant_id TEXT NOT NULL REFERENCES tenants(id),
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (tenant_id, key)
+  )`);
 
   db.prepare("INSERT OR IGNORE INTO tenants (id, name) VALUES (?, ?)").run(
     MASTER_TENANT_ID,
