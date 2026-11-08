@@ -80,7 +80,7 @@ const ORDER_NEWEST = "COALESCE(search_id, 0) DESC, id ASC";
 export function listLeads(tenantId: string, f: LeadFilter = {}, limit = 500): Lead[] {
   const w = where(tenantId, f);
   return getDb()
-    .prepare(`SELECT * FROM leads WHERE ${w.sql} ORDER BY ${f.sort === "bewertung" ? "score IS NULL, score DESC, " : ""}${ORDER_NEWEST} LIMIT ?`)
+    .prepare(`SELECT * FROM leads WHERE ${w.sql} ORDER BY ${f.sort === "bewertung" ? "score IS NULL, score DESC, " : "COALESCE(hiring, 0) DESC, "}${ORDER_NEWEST} LIMIT ?`)
     .all(...w.args, limit) as unknown as Lead[];
 }
 
