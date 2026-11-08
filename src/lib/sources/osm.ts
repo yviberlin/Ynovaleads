@@ -8,6 +8,7 @@ const INDUSTRY_TAGS: Record<string, string[]> = {
   arzt: ['"amenity"="doctors"', '"healthcare"="doctor"'],
   apotheke: ['"amenity"="pharmacy"'],
   friseur: ['"shop"="hairdresser"'],
+  frisör: ['"shop"="hairdresser"'],
   restaurant: ['"amenity"="restaurant"'],
   cafe: ['"amenity"="cafe"'],
   hotel: ['"tourism"="hotel"'],
@@ -31,16 +32,44 @@ const INDUSTRY_TAGS: Record<string, string[]> = {
   bäckerei: ['"shop"="bakery"'],
   fitness: ['"leisure"="fitness_centre"'],
   physiotherapie: ['"healthcare"="physiotherapist"'],
+  physio: ['"healthcare"="physiotherapist"'],
+  steuerbüro: ['"office"="tax_advisor"'],
   kosmetik: ['"shop"="beauty"'],
   blumen: ['"shop"="florist"'],
   optiker: ['"shop"="optician"'],
 };
 
+/** Bekannte Branchen, z. B. für Vorschläge im Suchfeld */
+export const KNOWN_INDUSTRIES = Object.keys(INDUSTRY_TAGS).map((k) => k[0].toUpperCase() + k.slice(1));
+
+function distance(a: string, b: string): number {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+
+/** Findet die Branche, auch mit kleinen Tippfehlern („Stuerberater“ → steuerberater). */
+export function matchIndustry(query: string): string | undefined {
+  const q = query.trim().toLowerCase();
+  for (const key of Object.keys(INDUSTRY_TAGS)) if (q.includes(key)) return key;
+  let best: { key: string; d: number } | undefined;
+  for (const word of q.split(/[\s,/-]+/).filter((w) => w.length >= 4)) {
+    for (const key of Object.keys(INDUSTRY_TAGS)) {
+      const d = distance(word, key);
+      const allowed = key.length >= 8 ? 2 : 1;
+      if (d <= allowed && (!best || d < best.d)) best = { key, d };
+    }
+  }
+  return best?.key;
+}
+
 function tagsFor(query: string): string[] {
   const q = query.trim().toLowerCase();
-  for (const [key, tags] of Object.entries(INDUSTRY_TAGS)) {
-    if (q.includes(key)) return tags;
-  }
+  const key = matchIndustry(q);
+  if (key) return INDUSTRY_TAGS[key];
   // Fallback: nach dem Stichwort im Namen suchen
   const safe = q.replace(/["\\]/g, "");
   return [`"name"~"${safe}",i`];

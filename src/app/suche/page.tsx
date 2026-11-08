@@ -1,5 +1,6 @@
 import { SOURCES, defaultSourceId } from "@/lib/sources";
 import { SearchForm } from "./search-form";
+import { KNOWN_INDUSTRIES } from "@/lib/sources/osm";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default function SuchePage() {
           <p>Sag mir, welche Firmen du suchst und wo. Ich sammle sie für dich.</p>
         </div>
       </div>
-      <SearchForm sources={sources} defaultSource={defaultSourceId()} />
+      <SearchForm sources={sources} defaultSource={defaultSourceId()} industries={KNOWN_INDUSTRIES} />
     </>
   );
 }
